@@ -12,6 +12,7 @@ def test_ac0():
     cart = ShoppingCart()
     dove = Product("Dove Soap", "39.99")
     cart.add_item(dove)
+    assert cart.number_of_line_items() == 1
     assert dove in cart and cart[dove] == 1
     assert cart.total_price() == Decimal("39.99")
 
@@ -21,6 +22,7 @@ def test_ac1():
     dove = Product("Dove Soap", "39.99")
     cart.add_multiple_items(dove, 5)
     cart.add_multiple_items(dove, 3)
+    assert cart.number_of_line_items() == 1
     assert dove in cart and cart[dove] == 8
     assert cart.total_price() == Decimal("319.92")
 
@@ -32,6 +34,7 @@ def test_ac2():
     cart.add_multiple_items(dove, 2)
     cart.add_multiple_items(axe, 2)
     cart.set_sales_tax_rate("0.125")
+    assert cart.number_of_line_items() == 2
     assert dove in cart and cart[dove] == 2
     assert axe in cart and cart[axe] == 2
     assert cart.sales_tax() == Decimal("35.00")
@@ -145,3 +148,4 @@ def test_printing():
     dove = Product("Dove Soap", "39.99")
     cart.add_item(dove)
     assert dove.name in str(cart)
+    assert str(dove.unit_price) in str(cart)

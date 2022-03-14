@@ -60,6 +60,9 @@ class ShoppingCart:
         sales_tax = self.sales_tax()
         return round(gross_price + sales_tax, 2)
 
+    def number_of_line_items(self) -> int:
+        return len(self)
+
     def add_multiple_items(self, product: Product, count: int) -> None:
         """
         Allows removing items from the cart when `count` < 0
