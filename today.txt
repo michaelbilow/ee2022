@@ -1,0 +1,80 @@
+Remove an item
+
+	Given the customer has 4 Dove Soaps and 2 Axe Deos in their cart
+
+	When the customer removes 1 Dove Soap
+
+	Then the number of Dove Soaps should be 3
+
+	And the total & the sales tax should reflect the change
+
+		Tax = 39.99
+
+		Price = 359.94
+
+Multi-buy discount (Line Level Discount)
+
+Given there is a Buy 2 Get 3rd Free offer on Dove Soap
+
+When I add 2 Dove Soap to the cart
+
+Then the discount is not applied to the cart
+
+And the total discount shown should be 0
+
+Tax = 10
+
+Price = 89.98
+
+
+Given there is a Buy 2 Get 3rd Free offer on Dove Soap
+
+When I add 3 Dove Soap to the cart
+
+And 3 Axe Deos to the cart
+
+Then the total discount should be the price of 1 Dove Soap
+And shown inclusive of sales tax
+
+And the total & the sales tax should reflect the discount
+
+Discount = 44.99
+
+Tax = 47.49
+
+Price = 427.44
+
+
+Given there is a Buy 2 Get 3rd Free offer on Dove Soap
+
+When I add 6 Dove Soap to the cart
+
+Then the total discount should be the price of 2 Dove Soap
+And shown inclusive of sales tax
+
+And the total & the sales tax should show the price for 4 Dove Soap
+
+Discount = 89.98
+
+Tax = 20.00
+
+Price = 179.95
+
+Total price discount (Cart Level Discount)
+
+Given there is a 10% discount for purchases over 1,000 after tax
+
+When I add more than 1,000 worth of items to my cart
+
+Then the total price should be reduced by 10%
+
+
+Given there is a 10% Discount for purchases over 1,000 after tax
+
+And there is a Buy 2 Get 3rd free offer on Dove Soap
+
+When the total is over 1,000 after tax
+
+And I add 3 Dove Soap to the cart
+
+Then total price discount should only be calculated after the multi-buy discount

@@ -1,6 +1,6 @@
 from equalexperts import __version__
 
-from equalexperts.shopping_cart import ShoppingCart, Product
+from equalexperts.shopping_cart import ShoppingCart, Product, LineLevelDiscount
 from decimal import Decimal
 import pytest
 import itertools
@@ -149,3 +149,26 @@ def test_printing():
     cart.add_item(dove)
     assert dove.name in str(cart)
     assert str(dove.unit_price) in str(cart)
+
+
+### New  Tests
+
+def dove_soap():
+    return Product("Dove Soap", "39.99")
+
+
+def test_multi_buy_below_thresold():
+    dove = dove_soap()
+    line_level_discount = LineLevelDiscount(dove,
+                                            buy_this_many=2,
+                                            get_this_many_free=1)
+    cart = ShoppingCart()
+    cart.add_multiple_items(dove, 2)
+    cart.add_line_level_discount(line_level_discount)
+    cart.set_sales_tax_rate(Decimal('0.125'))
+
+    assert not cart.has_any_discounts()
+    assert cart.total_discount() == 0
+    assert cart.sales_tax() == Decimal('10')
+    assert cart.total_price() == Decimal('89.98')
+

@@ -1,8 +1,7 @@
 from decimal import Decimal
 import decimal
-from typing import Union, Optional
-
-from pyparsing import line
+from typing import Union, Optional, List, Dict
+from dataclasses import dataclass
 
 ctx = decimal.getcontext()
 ctx.rounding = decimal.ROUND_HALF_UP
@@ -11,7 +10,7 @@ ctx.rounding = decimal.ROUND_HALF_UP
 class Product:
     def __init__(self, name: str, unit_price: Union[str, int, float, Decimal]) -> None:
         self.name = name
-        self.unit_price = round(Decimal(unit_price), 2)
+        self.unit_price: Decimal = round(Decimal(unit_price), 2)
 
     def __repr__(self) -> str:
         return f"{self.name} {self.unit_price}"
@@ -22,6 +21,28 @@ class Product:
     def __hash__(self) -> int:
         return hash((self.name, self.unit_price))
 
+@dataclass
+class LineLevelDiscount:
+    """
+    Represents 'Buy {buy'
+    """
+    product: Product
+    buy_this_many: int
+    get_this_many_free: int
+
+    def __repr__(self):
+        return f"Buy {self.buy_this_many} {self.product.name}, get {self.get_this_many_free} free."
+
+    def bulk_discount_threshold(self):
+        return self.buy_this_many + self.get_this_many_free
+    
+    def quantity_discounted(self, n_purchased: int) -> int:
+        quotient = n_purchased // self.bulk_discount_threshold()
+        remainder = n_purchased % self.bulk_discount_threshold()
+        return quotient * self.get_this_many_free + max(0, remainder - self.buy_this_many)
+
+    def price_discounted(self, n_purchased: int) -> Decimal:
+        return self.quantity_discounted(n_purchased) * self.product.unit_price
 
 class ShoppingCart:
     """
@@ -37,9 +58,11 @@ class ShoppingCart:
         self,
         line_items: Optional[dict[Product, int]] = None,
         sales_tax_rate: Union[str, int, float, Decimal] = Decimal(0),
+        line_level_discounts: Optional[dict[Product, LineLevelDiscount]] = None
     ):
         self._line_items: dict[Product, int] = {} if not line_items else line_items
         self._sales_tax_rate: Decimal = Decimal(sales_tax_rate)
+        self._line_level_discounts = {} if not line_level_discounts else line_level_discounts
 
     def set_sales_tax_rate(self, rate: Union[str, Decimal]) -> None:
         self._sales_tax_rate = Decimal(rate)
@@ -49,16 +72,31 @@ class ShoppingCart:
 
     def gross_price(self) -> Decimal:
         return sum(
-            count * product.unit_price for product, count in self._line_items.items()
+            product.unit_price * count for product, count in self._line_items.items()
         )
+
+    def add_line_level_discount(self, line_level_discount: LineLevelDiscount) -> None:
+        self._line_level_discounts[line_level_discount.product] = line_level_discount
+
+    def total_discount(self) -> Decimal:
+        return sum(
+            line_level_discount.price_discounted(self[product]) 
+            for product, line_level_discount 
+            in self._line_level_discounts.items()
+        )
+
+    def has_any_discounts(self) -> bool:
+        return self.total_discount() > 0
 
     def sales_tax(self) -> Decimal:
         return round(self.gross_price() * self._sales_tax_rate, 2)
 
     def total_price(self) -> Decimal:
         gross_price = self.gross_price()
+        total_discount = self.total_discount()
+        gross_net_discount = gross_price - total_discount
         sales_tax = self.sales_tax()
-        return round(gross_price + sales_tax, 2)
+        return round(gross_net_discount + sales_tax, 2)
 
     def number_of_line_items(self) -> int:
         return len(self)
